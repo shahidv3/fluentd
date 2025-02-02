@@ -1,0 +1,10 @@
+apiVersion: v2
+name: fluentd-kong
+description: A Helm chart for Fluentd to push Kong logs to a remote syslog server
+type: application
+version: 0.1.0
+appVersion: latest
+dependencies:
+  - name: fluentd
+    version: "1.16.3"
+    repository: "https://fluent.github.io/helm-charts"
