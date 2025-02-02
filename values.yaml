@@ -1,0 +1,48 @@
+fluentd:
+  daemonset:
+    enabled: true
+
+  configMaps:
+    fluentd-conf: |
+      <source>
+        @type tail
+        path /var/log/containers/*kong*.log
+        pos_file /var/log/fluentd-kong.pos
+        tag kong
+        format json
+        time_key time
+        time_format %Y-%m-%dT%H:%M:%S.%NZ
+        read_from_head true
+      </source>
+
+      <filter kong>
+        @type record_transformer
+        <record>
+          hostname ${hostname}
+        </record>
+      </filter>
+
+      <match kong>
+        @type remote_syslog
+        host YOUR_SIM_SERVER_IP
+        port 514
+        protocol udp
+        tag kong
+        facility user
+        severity info
+      </match>
+
+  tolerations:
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+  nodeSelector:
+    kubernetes.io/os: linux
+
+  resources:
+    limits:
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
