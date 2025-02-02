@@ -7,15 +7,14 @@ image:
 # Extra init container to install the missing plugin
 extraInitContainers:
   - name: install-plugins
-    image: fluent/fluentd:v1.15.3-debian-1
+    image: fluent/fluentd-kubernetes-daemonset:v1.16-debian-elasticsearch7-1
     command: ["/bin/sh", "-c"]
     args:
-      - "fluent-gem install fluent-plugin-remote_syslog"
+      - "fluent-gem install fluent-plugin-remote_syslog && cp -r /root/.gem /fluentd/plugins"
     volumeMounts:
       - name: plugins
         mountPath: /fluentd/plugins
 
-# Mount the installed plugins into Fluentd container
 extraVolumeMounts:
   - name: plugins
     mountPath: /fluentd/plugins
@@ -23,6 +22,7 @@ extraVolumeMounts:
 extraVolumes:
   - name: plugins
     emptyDir: {}
+    
 
 # Fluentd Configuration for Collecting Kong Logs
 fluentd:
