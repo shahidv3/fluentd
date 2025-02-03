@@ -1,0 +1,50 @@
+<source>
+  @type tail
+  path /var/log/containers/*kong*.log
+  pos_file /var/log/fluentd-kong.pos
+  tag kong.logs
+  format none
+</source>
+
+# Filter: Parse Kong logs
+<filter kong.logs>
+  @type parser
+  key_name message
+  reserve_data true
+  format /^(?<timestamp>\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) \[(?<log_level>\w+)\] (?<pid>\d+#\d+): \*(?<request_id>\d+) \[kong\] (?<source>[\w\.]+):(?<line>\d+) \[(?<namespace>[^\]]+)\] (?<message>[^,]+), client: (?<client_ip>[\d\.]+), server: (?<server>[^,]+), request: "(?<method>\w+) (?<path>[^ ]+) (?<http_version>[^"]+)", host: "(?<host>[^"]+)"$/
+</filter>
+
+# Output: Transform parsed data into JSON
+<filter kong.logs>
+  @type record_transformer
+  <record>
+    timestamp ${record["timestamp"]}
+    log_level ${record["log_level"]}
+    pid ${record["pid"]}
+    request_id ${record["request_id"]}
+    source ${record["source"]}
+    line ${record["line"].to_i}
+    namespace ${record["namespace"]}
+    message ${record["message"]}
+    client_ip ${record["client_ip"]}
+    server ${record["server"]}
+    method ${record["method"]}
+    path ${record["path"]}
+    http_version ${record["http_version"]}
+    host ${record["host"]}
+  </record>
+</filter>
+
+# Output: Send JSON logs to the remote Syslog server
+<match kong.logs>
+  @type remote_syslog
+  host your-syslog-server.com
+  port 514
+  protocol udp
+  severity info
+  facility local0
+  packet_size 65535
+  hostname fluentd
+  program kong
+  tag kong.logs
+</match>
