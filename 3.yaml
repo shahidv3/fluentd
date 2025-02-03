@@ -1,0 +1,45 @@
+config:
+  # Input configuration
+  inputs:
+    - type: tail
+      path: /var/log/containers/*kong*.log
+      pos_file: /var/log/fluentd-kong.pos
+      tag: kong.logs
+      format: none
+
+  # Combined filter configuration
+  filters:
+    - tag: kong.logs
+      type: parser
+      key_name: message
+      format: >-
+        /^(?<timestamp>\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}) \[(?<log_level>\w+)\] .* \[kong\] (?<source>[\w\.]+):(?<line>\d+) \[(?<namespace>[^\]]+)\] (?<message>[^,]+), client: (?<client_ip>[\d\.]+), request: "(?<method>\w+) (?<path>[^ ]+) (?<http_version>[^"]+)"$/
+      
+    - tag: kong.logs
+      type: record_transformer
+      <record>
+        timestamp ${record["timestamp"]}
+        log_level ${record["log_level"]}
+        source ${record["source"]}
+        line ${record["line"]}
+        namespace ${record["namespace"]}
+        message ${record["message"]}
+        client_ip ${record["client_ip"]}
+        method ${record["method"]}
+        path ${record["path"]}
+        http_version ${record["http_version"]}
+      </record>
+
+  # Output configuration
+  outputs:
+    - tag: kong.logs
+      type: remote_syslog
+      host: your-syslog-server.com
+      port: 514
+      protocol: udp
+      severity: info
+      facility: local0
+      packet_size: 65535
+      hostname: fluentd
+      program: kong
+      tag: kong.logs
