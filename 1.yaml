@@ -1,0 +1,40 @@
+# Input: Capture Kong logs only
+<source>
+  @type tail
+  path /var/log/containers/*kong*.log
+  pos_file /var/log/fluentd-kong.pos
+  tag kong.logs
+  format none
+</source>
+
+# Filter: Convert Kong logs into structured JSON
+<filter kong.logs>
+  @type parser
+  key_name message
+  format /(?<timestamp>[^ ]+) (?<log>.*)/
+  time_format %Y-%m-%d %H:%M:%S
+</filter>
+
+# Transform the logs into JSON format
+<filter kong.logs>
+  @type record_transformer
+  enable_ruby
+  <record>
+    log ${record["log"].gsub(/(\w+)=([\w\d.-]+)/, '"\1":"\2"').gsub(/ /, ', ')}
+    timestamp ${record["timestamp"]}
+  </record>
+</filter>
+
+# Output: Send logs to remote Syslog server in JSON format
+<match kong.logs>
+  @type remote_syslog
+  host your-syslog-server.com
+  port 514
+  protocol udp
+  severity info
+  facility local0
+  packet_size 65535
+  hostname fluentd
+  program kong
+  tag kong.logs
+</match>
