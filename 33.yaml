@@ -1,0 +1,19 @@
+<filter your_logs>
+  @type record_transformer
+  enable_ruby true
+  <record>
+    log ${record["log"].gsub("\\", "")}
+  </record>
+</filter>
+
+
+<filter your_logs>
+  @type parser
+  format none  # No predefined format
+  key_name log  # The key containing the raw log message
+  reserve_data true
+  <parse>
+    @type regexp
+    expression /field1=(?<field1>[^f]+)field2=(?<field2>[^f]+)field3=(?<field3>.+)/
+  </parse>
+</filter>
