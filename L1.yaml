@@ -1,0 +1,57 @@
+loki:
+  limitsConfig:
+    ingestion_rate_mb: 100  # Increase ingestion rate for high log volume
+    ingestion_burst_size_mb: 200  # Handle log spikes efficiently
+    max_query_parallelism: 32  # Allow more parallel queries
+    max_query_series: 5000  # Allow querying more log series
+    max_entries_limit_per_query: 10000000  # Increase log entries per query
+    max_query_lookback: 28d  # Allow queries up to 28 days
+    reject_old_samples: true  # Prevents ingesting logs with old timestamps
+    max_cache_freshness_per_query: 10m  # Improve query performance with cache
+
+  querier:
+    extraArgs:
+      - -querier.parallelise-shardable-queries=true  # Enable parallel query execution
+      - -querier.max-concurrent=16  # Allow more concurrent queries
+      - -querier.query-store-max-retries=10  # Retry failed S3 queries
+      - -store.gateway-enable=true  # Optimize fetching logs from S3
+      - -querier.batching-enable=true  # Reduce small frequent requests
+      - -querier.query-ingesters-within=12h  # Optimize ingester lookups
+
+  storageConfig:
+    boltdb_shipper:
+      active_index_directory: /var/loki/index  # Local index directory
+      cache_location: /var/loki/index_cache  # Cache location for faster lookups
+      shared_store: s3  # Store logs in S3 for scalability
+      index_gateway_client: true  # Enable index gateway for performance
+
+  schemaConfig:
+    configs:
+      - from: 2024-01-01
+        store: boltdb-shipper
+        object_store: s3
+        schema: v11
+        index:
+          prefix: loki_index_
+          period: 24h  # Reduce index period to avoid large index sizes
+
+  compactor:
+    retention_enabled: true
+    shared_store: s3
+    retention_delete_delay: 1h
+    retention_period:
+      - period: 28d
+        selector: '{job=".*"}'  # Delete old logs beyond 28 days
+
+  distributor:
+    ring:
+      kvstore:
+        store: memberlist  # Reduce metadata lookup delays
+
+  ingester:
+    chunk_encoding: snappy  # Use snappy compression for better performance
+    max_chunk_age: 1h  # Reduce chunk age to improve ingestion performance
+    chunk_retain_period: 5m  # Keep recent chunks in memory to speed up queries
+
+  query_frontend:
+    max_outstanding_per_tenant: 4096  # Increase outstanding queries
