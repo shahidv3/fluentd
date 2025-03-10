@@ -1,0 +1,86 @@
+loki:
+  # Querier settings for high load
+  querier:
+    replicas: 5  # Increase querier replicas for load balancing
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2000m"
+        memory: "6Gi"
+    extraArgs:
+      - -querier.parallelise-shardable-queries=true  # Enable parallel query execution
+      - -querier.max-concurrent=16  # Increase the number of concurrent queries
+      - -querier.query-store-max-retries=10  # Retry failed S3 queries
+      - -store.gateway-enable=true  # Enable index gateway for optimized log fetch
+      - -querier.batching-enable=true  # Reduce small frequent requests
+      - -querier.query-ingesters-within=12h  # Optimize ingester lookups
+
+  # Query frontend settings to cache results and reduce load
+  query_frontend:
+    enabled: true
+    cache_results: true  # Enable query result caching
+    results_cache:
+      cache:
+        backend: memcached  # Use Memcached for caching query results
+        memcached:
+          host: memcached-loki.monitoring  # Define the Memcached service
+
+  # Configurations to limit excessive log queries
+  limitsConfig:
+    max_query_parallelism: 16  # Prevent queriers from handling too many parallel queries
+    max_query_series: 5000  # Limit the number of series in a query
+    max_entries_limit_per_query: 5000000  # Limit the number of log entries per query
+    reject_old_samples: true  # Reject logs older than the retention period
+    max_cache_freshness_per_query: 10m  # Limit how fresh cached results should be
+
+  # Loki compactor settings to manage retention and indexing
+  compactor:
+    retention_enabled: true
+    shared_store: s3  # Store logs in S3 for long-term retention
+    retention_delete_delay: 1h
+    retention_period:
+      - period: 28d  # Retain logs for 28 days in the queryable store
+      - selector: '{job=".*"}'
+
+  # Loki storage settings, using S3 and BoltDB shippers
+  storageConfig:
+    boltdb_shipper:
+      active_index_directory: /var/loki/index  # Local directory for active indexes
+      cache_location: /var/loki/index_cache  # Cache location to speed up indexing
+      shared_store: s3  # Use S3 for scalable log storage
+      index_gateway_client: true  # Enable index gateway for better performance
+    schemaConfig:
+      configs:
+        - from: 2024-01-01
+          store: boltdb-shipper
+          object_store: s3
+          schema: v11
+          index:
+            prefix: loki_index_
+            period: 24h  # Smaller index period to prevent large indexes
+
+  # Distributor settings to handle increased load
+  distributor:
+    ring:
+      kvstore:
+        store: memberlist  # Reduce metadata lookup delays
+
+  # Ingester settings to handle chunking and improve ingestion performance
+  ingester:
+    chunk_encoding: snappy  # Use snappy compression for better performance
+    max_chunk_age: 1h  # Optimize chunk age for faster ingestion
+    chunk_retain_period: 5m  # Keep recent chunks in memory to speed up queries
+
+  # Define retention period for logs that are pushed to long-term storage (S3)
+  retention:
+    period: 28d  # Retain logs for 28 days in local storage before offloading to S3
+
+  # Monitor Loki components for issues like "CrashLoopBackOff" and retry strategies
+  monitoring:
+    enabled: true
+    prometheus:
+      scrape_interval: 15s  # More frequent scraping to monitor performance
+    alertmanager:
+      alert_on_pod_crash: true  # Alert when a Loki component crashes
