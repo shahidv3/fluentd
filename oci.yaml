@@ -1,0 +1,7 @@
+oci compute instance list --all \
+  --query "data[*].{Name:\"display-name\", Compartment:\"compartment-id\", OS:\"platform-config.os-name\", Version:\"platform-config.os-version\"}" \
+  --output table
+
+oci compute instance list --all \
+  --query "data[*].{Name:\"display-name\", CompartmentName:\"compartment-id\", OS:\"platform-config.os-name\", Version:\"platform-config.os-version\"}" \
+  --output json | jq -r '.[] | [.Name, (.CompartmentName | sub("^.*::.*:compartment:"; "")), .OS, .Version] | @tsv'
