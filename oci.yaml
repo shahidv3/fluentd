@@ -28,3 +28,4 @@ done
   desktop --format=json | jq -r '.[] | "\(.metadata.name)\t\(.spec.addr)"'
 ) | column -t -s $'\t'
   
+=IF(COUNTIF($B:$B, A2) > 0, "Match", "No Match")
