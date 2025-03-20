@@ -14,9 +14,17 @@ for COMPARTMENT_ID in $(oci iam compartment list --all --query "data[*].id" --ra
       --output table
 done
 
-
-tctl get windowsdesktop --format=json | jq -r '
+  
   ["Name", "IP Address"],
   ["----", "----------"],
   (.items[] | [ .name, .spec.addr ])
-  | @tsv' | column -t
+  | @tsv' | column -
+
+
+(
+  echo -e "Name\tIP Address";
+  echo -e "----\t----------";
+  tctl get windows_
+  desktop --format=json | jq -r '.[] | "\(.metadata.name)\t\(.spec.addr)"'
+) | column -t -s $'\t'
+  
