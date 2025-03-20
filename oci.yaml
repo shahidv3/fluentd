@@ -13,3 +13,10 @@ for COMPARTMENT_ID in $(oci iam compartment list --all --query "data[*].id" --ra
       --query "data[*].{VM:\"display-name\", Compartment:\"$COMPARTMENT_NAME\", OS:\"platform-config.os-name\", Version:\"platform-config.os-version\"}" \
       --output table
 done
+
+
+tctl get windowsdesktop --format=json | jq -r '
+  ["Name", "IP Address"],
+  ["----", "----------"],
+  (.items[] | [ .name, .spec.addr ])
+  | @tsv' | column -t
