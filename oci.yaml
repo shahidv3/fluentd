@@ -5,3 +5,11 @@ oci compute instance list --all \
 oci compute instance list --all \
   --query "data[*].{Name:\"display-name\", CompartmentName:\"compartment-id\", OS:\"platform-config.os-name\", Version:\"platform-config.os-version\"}" \
   --output json | jq -r '.[] | [.Name, (.CompartmentName | sub("^.*::.*:compartment:"; "")), .OS, .Version] | @tsv'
+
+
+for COMPARTMENT_ID in $(oci iam compartment list --all --query "data[*].id" --raw-output); do
+    COMPARTMENT_NAME=$(oci iam compartment get --compartment-id $COMPARTMENT_ID --query "data.name" --raw-output)
+    oci compute instance list --compartment-id $COMPARTMENT_ID --all \
+      --query "data[*].{VM:\"display-name\", Compartment:\"$COMPARTMENT_NAME\", OS:\"platform-config.os-name\", Version:\"platform-config.os-version\"}" \
+      --output table
+done
