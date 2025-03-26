@@ -1,0 +1,5 @@
+logName=("projects/*/logs/cloudaudit.googleapis.com%2Factivity") 
+OR logName=("projects/*/logs/cloudaudit.googleapis.com%2Fsystem_event") 
+OR logName=("projects/*/logs/cloudaudit.googleapis.com%2Fdata_access") 
+OR resource.type=("k8s_cluster") 
+OR resource.type=("gce_instance")
