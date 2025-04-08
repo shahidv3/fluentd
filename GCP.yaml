@@ -3,3 +3,16 @@ OR logName=("projects/*/logs/cloudaudit.googleapis.com%2Fsystem_event")
 OR logName=("projects/*/logs/cloudaudit.googleapis.com%2Fdata_access") 
 OR resource.type=("k8s_cluster") 
 OR resource.type=("gce_instance")
+
+
+logName:"logs/cloudaudit.googleapis.com%2Factivity"
+resource.type="gce_instance"
+resource.labels.project_id="your-project-id"  -- optional but good for scoping
+protoPayload.serviceName="compute.googleapis.com"
+protoPayload.methodName=(
+  "v1.compute.instances.insert" OR
+  "v1.compute.instances.delete" OR
+  "v1.compute.instances.start" OR
+  "v1.compute.instances.stop" OR
+  "v1.compute.instances.reset"
+)
