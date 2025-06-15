@@ -1,0 +1,108 @@
+Performance Alert & Incident Handling Process Document
+
+⸻
+
+Document Version
+	•	Version: 1.2
+	•	Prepared By: Platform / Observability Team
+	•	Last Updated: [Insert Date]
+
+⸻
+
+Purpose
+
+To define a standardized process for identifying, responding to, and resolving performance-related alerts and incidents through full-stack observability. This process utilizes Dynatrace for monitoring and root cause analysis and ServiceNow for incident lifecycle management.
+
+⸻
+
+Scope
+
+Applies to all services, infrastructure, and environments hosted across:
+
+Primary Data Center: Oracle Cloud Infrastructure (OCI)
+Secondary Data Center: Google Cloud Platform (GCP)
+
+Monitoring Coverage Includes:
+	•	OCI & GCP compute infrastructure
+	•	Production Kubernetes clusters (across both clouds)
+	•	Production databases (PostgreSQL, MySQL, etc.)
+	•	Application/API performance
+	•	TLS/SSL certificates (expiry and validity monitoring)
+	•	User experience monitoring (via RUM & Synthetics)
+
+⸻
+
+Tools Used
+	•	Dynatrace – Full-stack observability, AIOps-based problem detection
+	•	ServiceNow – Incident tracking, workflow automation
+	•	GCP Monitoring / OCI Metrics – Native telemetry and health metrics
+	•	Email / Slack / MS Teams – Alert notifications and collaboration
+
+⸻
+
+Full Stack Observability Components
+	•	Compute Infrastructure: OCI & GCP VMs: CPU, memory, disk, network
+	•	Kubernetes: Node health, pod status, deployments, control plane metrics
+	•	Databases: Performance metrics, connection errors, slow queries
+	•	Certificates: Expiry dates, invalid chains, renewals
+	•	Applications/APIs: Throughput, latency, error rate, distributed traces
+	•	Network Endpoints: Latency, packet loss, DNS, and service availability via synthetics
+
+⸻
+
+Real-Time Monitoring – Command Center Team
+	•	The Dynatrace dashboards are continuously monitored by our Command Center team, 24x7.
+	•	The team is responsible for:
+	•	Watching real-time alerts and dashboards for production issues.
+	•	Identifying anomalies or critical system failures.
+	•	Notifying the SRE and Platform teams for triage and resolution support.
+	•	Ensuring high-severity issues are escalated promptly and accurately.
+	•	The Command Center serves as the first-line monitoring function in our operational workflow.
+
+⸻
+
+Incident Handling Workflow
+
+1. Alert Generation in Dynatrace
+	•	Dynatrace uses AI to detect anomalies in infrastructure, applications, Kubernetes, and databases.
+	•	When a problem is detected:
+	•	Dynatrace automatically opens a Problem with root cause analysis.
+	•	The Command Center team is immediately notified.
+	•	Problem triggers automated ServiceNow incident creation via integration.
+
+2. Incident Creation in ServiceNow
+	•	Each Dynatrace Problem creates a corresponding ServiceNow incident.
+	•	The incident includes:
+	•	Problem summary, affected services, severity, and root cause
+	•	Direct links to Dynatrace traces/logs/metrics
+	•	Auto-assigned to the correct resolver group based on tagging or CI mapping.
+
+3. Triage & Escalation
+	•	Command Center alerts the respective SRE and Platform teams to initiate investigation.
+	•	Teams:
+	•	Acknowledge the incident
+	•	Review Dynatrace RCA and logs
+	•	Access OCI/GCP dashboards if needed for further validation
+	•	If high impact:
+	•	Incident bridge is opened
+	•	SMEs are pulled in from relevant domains (DB, Network, App, Platform)
+
+4. Issue Resolution
+	•	Actions may include:
+	•	Restarting services or workloads
+	•	Scaling nodes or reconfiguring infrastructure
+	•	Fixing certificate or deployment issues
+	•	Dynatrace continuously monitors resolution progress.
+	•	Once the issue is resolved:
+	•	Dynatrace auto-closes the Problem
+	•	Linked ServiceNow incident is closed automatically with resolution notes
+
+5. Post-Incident Review (PIR)
+	•	PIR is initiated for:
+	•	Production-impacting incidents
+	•	Repeat or recurring problems
+	•	Includes:
+	•	Timeline of events
+	•	RCA confirmation
+	•	Impact analysis across OCI/GCP environments
+	•	Preventive actions (e.g., alert tuning, infra scaling, cert automation)
